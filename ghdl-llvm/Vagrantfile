@@ -20,9 +20,8 @@ Vagrant.configure("2") do |config|
   end
 
   config.vm.provision "shell", inline: <<-SHELL
-    apt-get update
-    apt-get install -y llvm clang gnat git vim
-    apt-get install -y texinfo # needed for gcc make install
+    apt-get -qq update > /dev/null
+    apt-get -qq install -y llvm clang gnat git vim > /dev/null
 
     # Get GHDL
     git clone https://github.com/tgingold/ghdl.git ghdl
@@ -31,7 +30,12 @@ Vagrant.configure("2") do |config|
     cd ghdl
     mkdir build
     cd build
-    ../configure --with-llvm-config --prefix=/usr/local && make && make install
+    echo Configuring
+    ../configure --with-llvm-config --prefix=/usr/local > configure.output
+    echo Building
+    make > make.output 2> make.stderr
+    echo Installing
+    make install > make_install.output
 
     # Test
     cd /home/vagrant

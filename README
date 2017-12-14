@@ -3,7 +3,10 @@ These are simple debian based Vagrantfile s that build GHDL.
 Currently supported builds:
 * mcode
 * llvm
-* (coming soon) gcc
+* (coming soon) gcc - Note, this build is very very IO intensive. This will
+    take an excruciatingly long amount of time if you don't have an SSD. I
+    would suggest you try one of the other builds if you're using mechanical
+    media.
 
 Each Vagrantfile should result in a box that you can ssh into and run ghdl.
 
