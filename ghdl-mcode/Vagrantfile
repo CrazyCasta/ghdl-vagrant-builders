@@ -13,13 +13,29 @@ Vagrant.configure("2") do |config|
 
   cache_dir = local_cache(config.vm.box)
   config.vm.synced_folder cache_dir, "/var/cache/apt/archives"
-  config.vm.synced_folder "../code", "/home/vagrant/code"
+
+  config.vm.provider "virtualbox" do |v|
+    v.memory = 4096
+    v.cpus = 4
+  end
 
   config.vm.provision "shell", inline: <<-SHELL
     apt-get update
     apt-get install -y llvm clang gnat git vim
+
+    # Get GHDL
     git clone https://github.com/tgingold/ghdl.git ghdl
+
+    # Compile and install
     cd ghdl
     ./configure --prefix=/usr/local && make && make install
+
+    # Test
+    cd /home/vagrant
+    cp -r /vagrant/hello_world .
+    cd hello_world
+    ghdl -a hello.vhdl
+    ghdl -e hello_world
+    ghdl -r hello_world
   SHELL
 end
