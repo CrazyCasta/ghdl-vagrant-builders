@@ -1,0 +1,25 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+#
+def local_cache(basebox_name)
+  cache_dir = Vagrant::Environment.new.home_path.join('cache', 'apt', basebox_name)
+  partial_dir = cache_dir.join('partial')
+  FileUtils.mkdir_p(partial_dir) unless partial_dir.exist?
+  cache_dir
+end
+
+Vagrant.configure("2") do |config|
+  config.vm.box = "bento/debian-9.1"
+
+  cache_dir = local_cache(config.vm.box)
+  config.vm.synced_folder cache_dir, "/var/cache/apt/archives"
+  config.vm.synced_folder "../code", "/home/vagrant/code"
+
+  config.vm.provision "shell", inline: <<-SHELL
+    apt-get update
+    apt-get install -y llvm clang gnat git vim
+    git clone https://github.com/tgingold/ghdl.git ghdl
+    cd ghdl
+    ./configure --prefix=/usr/local && make && make install
+  SHELL
+end
