@@ -1,0 +1,3 @@
+These are simple debian based Vagrantfile s that build GHDL. Currently this is
+mcode, gcc will be added as soon as it's tested from scratch and llvm if I can
+get it working will follow.
