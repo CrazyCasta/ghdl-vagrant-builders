@@ -1,3 +1,31 @@
-These are simple debian based Vagrantfile s that build GHDL. Currently this is
-mcode, gcc will be added as soon as it's tested from scratch and llvm if I can
-get it working will follow.
+These are simple debian based Vagrantfile s that build GHDL.
+
+Currently supported builds:
+* mcode
+* llvm
+* (coming soon) gcc
+
+Each Vagrantfile should result in a box that you can ssh into and run ghdl.
+
+For instance:
+
+$ vagrant up
+...
+...
+...
+    default: install -m 644 -p libghdlvpi.so /usr/local/lib/
+    default: install -m 644 -p /home/vagrant/ghdl/./src/grt/vpi_user.h /usr/local/include/
+    default: Hello world!
+$ vagrant ssh
+...
+vagrant@debian-9:~$ rm -r hello_world/
+vagrant@debian-9:~$ cp -r /vagrant/hello_world/ .
+vagrant@debian-9:~$ cd hello_world/
+vagrant@debian-9:~/hello_world$ ghdl -a hello.vhdl
+vagrant@debian-9:~/hello_world$ ghdl -e hello_world
+vagrant@debian-9:~/hello_world$ ghdl -r hello_world
+Hello world!
+vagrant@debian-9:~/hello_world$ exit
+logout
+Connection to 127.0.0.1 closed.
+$
