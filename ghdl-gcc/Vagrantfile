@@ -1,0 +1,73 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+#
+def local_cache(basebox_name)
+  cache_dir = Vagrant::Environment.new.home_path.join('cache', 'apt', basebox_name)
+  partial_dir = cache_dir.join('partial')
+  FileUtils.mkdir_p(partial_dir) unless partial_dir.exist?
+  cache_dir
+end
+
+Vagrant.configure("2") do |config|
+  config.vm.box = "bento/debian-9.1"
+
+  cache_dir = local_cache(config.vm.box)
+  config.vm.synced_folder cache_dir, "/var/cache/apt/archives"
+
+  config.vm.provider "virtualbox" do |v|
+    v.memory = 4096
+    v.cpus = 4
+  end
+
+  config.vm.provision "shell", inline: <<-SHELL
+    apt-get -qq update > /dev/null
+    apt-get -qq install -y llvm clang gnat git vim > /dev/null
+    apt-get -qq install -y texinfo > /dev/null # needed for gcc make install
+
+    echo "************************************************************"
+    echo "Get GHDL"
+    echo "************************************************************"
+    git clone https://github.com/tgingold/ghdl.git ghdl
+
+    echo "************************************************************"
+    echo "Get GCC & prereqs"
+    echo "************************************************************"
+    wget --no-verbose https://mirrors.peers.community/mirrors/gnu/gcc/gcc-7.2.0/gcc-7.2.0.tar.xz
+    tar xJf gcc-7.2.0.tar.xz
+    pushd gcc-7.2.0
+    contrib/download_prerequisites
+    popd
+
+    echo "************************************************************"
+    echo "Configure GHDL and create GCC sources"
+    echo "************************************************************"
+    cd ghdl
+    mkdir build
+    cd build
+    ../configure --with-gcc=/home/vagrant/gcc-7.2.0 --prefix=/usr/local > configure.output
+    make copy-sources > make_copy_sources.output
+
+    echo "************************************************************"
+    echo "Make GCC with VHDL support"
+    echo "************************************************************"
+    mkdir gcc-objs
+    cd gcc-objs
+    /home/vagrant/gcc-7.2.0/configure --prefix=/usr/local --enable-languages=c,vhdl --disable-bootstrap --disable-lto --disable-multilib --disable-libssp --disable-libgomp --disable-libquadmath > configure.output
+    make -j5 > make.output 2> make.stderr
+    make install > make_install.output
+
+    echo "************************************************************"
+    echo "Make GHDL"
+    echo "************************************************************"
+    cd /home/vagrant/ghdl/build
+    make ghdllib > make_ghdllib.output 2> make_ghdllib.stderr
+    make install > make_install.output
+
+    cd /home/vagrant
+    cp -r /vagrant/hello_world .
+    cd hello_world
+    ghdl -a hello.vhdl
+    ghdl -e hello_world
+    ghdl -r hello_world
+  SHELL
+end
